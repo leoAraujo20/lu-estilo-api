@@ -1,0 +1,47 @@
+[project]
+name = "lu-estilo-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.16.0",
+    "fastapi[standard]>=0.115.12",
+    "psycopg[binary]>=3.2.9",
+    "pwdlib[argon2]>=0.2.1",
+    "pydantic-settings>=2.9.1",
+    "pyjwt>=2.10.1",
+    "pytest-cov>=6.1.1",
+    "sqlalchemy[asyncio]>=2.0.41",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "ruff>=0.11.10",
+    "taskipy>=1.14.1",
+]
+
+[tool.ruff]
+line-length = 79
+exclude = ["migrations"]
+[tool.ruff.lint]
+preview = true
+select = ['I', 'F', 'E', 'W', 'PL', 'PT']
+[tool.ruff.format]
+preview = true
+quote-style = "single"
+
+[tool.pytest.ini_options]
+pythonpath = "."
+testpaths = ["tests"]
+addopts = '-p no:warnings'
+
+[tool.taskipy.tasks]
+run = "fastapi dev app/main.py"
+lint = "ruff check"
+pre_format = "ruff check --fix"
+format = "ruff format"
+pre_test = "task lint"
+test = "pytest -s -x --cov=app -vv"
+post_test = "coverage html"

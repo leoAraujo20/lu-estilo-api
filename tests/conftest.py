@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import StaticPool
 
+from app.database import get_async_session
 from app.main import app
 from app.models import (
     Client,
@@ -16,10 +17,18 @@ from app.models import (
 
 
 @pytest.fixture
-def client():
+def client(session):
     """Cria um cliente de teste para a aplicação FastAPI."""
+
+    def override_get_session():
+        return session
+
+    app.dependency_overrides[get_async_session] = override_get_session
+
     with TestClient(app) as client:
         yield client
+
+    app.dependency_overrides = {}
 
 
 @pytest.fixture

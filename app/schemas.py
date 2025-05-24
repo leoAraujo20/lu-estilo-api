@@ -11,6 +11,27 @@ class UserPublic(BaseModel):
     username: str
 
 
+class ClientSchema(BaseModel):
+    name: str
+    email: str
+    cpf: str
+
+
+class ClientPublic(BaseModel):
+    id: int
+    name: str
+    email: str
+
+
+class ClientUpdate(BaseModel):
+    name: str | None = None
+    email: str | None = None
+
+
+class ClientList(BaseModel):
+    clients: list[ClientPublic]
+
+
 class TokenSchema(BaseModel):
     access_token: str
     token_type: str

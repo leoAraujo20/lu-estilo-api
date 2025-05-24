@@ -108,3 +108,16 @@ async def item(session, product):
     await session.commit()
     await session.refresh(item)
     return item
+
+
+@pytest.fixture
+def token(client, user):
+    """Cria um token de acesso para o usuário de teste."""
+    user_data = {
+        'username': user.username,
+        'password': user.clean_password,
+    }
+    response = client.post('/auth/login', data=user_data)
+
+    token = response.json().get('access_token')
+    return token

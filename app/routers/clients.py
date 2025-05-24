@@ -1,13 +1,19 @@
 from http import HTTPStatus
 from typing import Annotated, AsyncGenerator
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
 from app.models import Client
-from app.schemas import ClientList, ClientPublic, ClientSchema, ClientUpdate
+from app.schemas import (
+    ClientList,
+    ClientPublic,
+    ClientSchema,
+    ClientUpdate,
+    FilterClient,
+)
 from app.security import get_current_user
 
 router = APIRouter(
@@ -53,19 +59,29 @@ async def create_client(
 
 
 @router.get('/', response_model=ClientList)
-async def get_clients(session: T_Session) -> ClientList:
+async def get_clients(
+    session: T_Session, filter_query: Annotated[FilterClient, Query()]
+) -> ClientList:
     """Obtém a lista de clientes."""
-    clients = await session.scalars(select(Client))
+    query = (
+        select(Client).offset(filter_query.offset).limit(filter_query.limit)
+    )
 
+    if filter_query.name:
+        query = query.filter(Client.name.contains(filter_query.name))
+    if filter_query.email:
+        query = query.filter(Client.email.contains(filter_query.email))
+
+    clients = await session.scalars(query)
     clients_list = clients.all()
+
     return {'clients': clients_list}
 
 
 @router.get(
     '/{client_id}', response_model=ClientPublic, status_code=HTTPStatus.OK
 )
-async def get_client(
-    client_id: int, session: T_Session) -> ClientPublic:
+async def get_client(client_id: int, session: T_Session) -> ClientPublic:
     """Obtém um cliente pelo ID."""
     client = await session.scalar(select(Client).where(Client.id == client_id))
     if not client:

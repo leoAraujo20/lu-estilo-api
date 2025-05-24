@@ -49,6 +49,7 @@ async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     session=Depends(get_async_session),
 ) -> User:
+    """Obtém o usuário atual a partir do token JWT fornecido."""
     credentials_exception = HTTPException(
         status_code=HTTPStatus.UNAUTHORIZED,
         detail='Credenciais inválidas',

@@ -14,6 +14,7 @@ from app.models import (
     User,
     table_registry,
 )
+from app.security import hash_password
 
 
 @pytest.fixture
@@ -58,10 +59,11 @@ async def session(engine):
 @pytest_asyncio.fixture
 async def user(session):
     """Cria um usuário de teste."""
-    user = User(username='testuser', password='testpassword')
+    user = User(username='testuser', password=hash_password('testpassword'))
     session.add(user)
     await session.commit()
     await session.refresh(user)
+    user.clean_password = 'testpassword'
     return user
 
 

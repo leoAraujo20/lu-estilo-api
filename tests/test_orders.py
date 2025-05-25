@@ -23,6 +23,7 @@ def test_create_order(client, token, client_db, product):
             {'product_id': product.id, 'quantity': 2},
         ],
         'status': 'pending',
+        'order_date': response.json().get('order_date'),
     }
 
 
@@ -45,6 +46,7 @@ def test_get_orders(client, token, order):
                     }
                 ],
                 'status': order.status.value,
+                'order_date': response.json()['orders'][0].get('order_date'),
             }
         ],
     }
@@ -67,6 +69,7 @@ def test_get_order(client, token, order):
             }
         ],
         'status': order.status.value,
+        'order_date': response.json().get('order_date'),
     }
 
 
@@ -92,4 +95,5 @@ def test_update_order(client, token, order):
             }
         ],
         'status': 'shipped',
+        'order_date': response.json().get('order_date'),
     }

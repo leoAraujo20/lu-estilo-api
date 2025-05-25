@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel
 
@@ -96,6 +96,7 @@ class OrderSchema(BaseModel):
 
 class OrderPublic(OrderSchema):
     id: int
+    order_date: datetime
 
 
 class OrderList(BaseModel):

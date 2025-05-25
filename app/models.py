@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from enum import Enum
 
 from sqlalchemy import ForeignKey
@@ -76,6 +76,9 @@ class Order:
     )
     status: Mapped[OrderStatus] = mapped_column(
         default=OrderStatus.PENDING, nullable=False
+    )
+    order_date: Mapped[datetime] = mapped_column(
+        default=datetime.now(timezone.utc), nullable=False
     )
 
 

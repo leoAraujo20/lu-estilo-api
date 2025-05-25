@@ -117,8 +117,8 @@ async def update_client(
             detail='Já existe um cliente com este e-mail.',
         )
 
-    client_db.name = client.name
-    client_db.email = client.email
+    for field, value in client.model_dump(exclude_unset=True).items():
+        setattr(client_db, field, value)
 
     await session.commit()
     await session.refresh(client_db)

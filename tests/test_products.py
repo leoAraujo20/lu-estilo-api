@@ -46,6 +46,28 @@ def test_create_product(client, token):
     }
 
 
+def test_create_product_with_existing_barcode(client, token, product):
+    product_data = {
+        'barcode': product.barcode,
+        'description': 'This is another test product.',
+        'price_cents': 2999,
+        'section': ProductSection.CLOTHING.value,
+        'inventory': 50,
+    }
+
+    response = client.post(
+        '/products/',
+        json=product_data,
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert (
+        response.json()['detail']
+        == 'Já existe um produto com este código de barras.'
+    )
+
+
 def test_get_products(client, token, product):
     response = client.get(
         '/products/',
@@ -66,6 +88,16 @@ def test_get_products(client, token, product):
             }
         ]
     }
+
+
+def test_get_product_not_found(client, token, product):
+    response = client.get(
+        '/products/9999',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Produto não encontrado.'}
 
 
 @pytest.mark.asyncio
@@ -181,6 +213,23 @@ def test_update_product(client, token, product):
     }
 
 
+def test_update_product_not_found(client, token, product):
+    update_data = {
+        'description': 'Updated product description.',
+        'price_cents': 2999,
+        'inventory': 50,
+    }
+
+    response = client.put(
+        '/products/9999',
+        json=update_data,
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Produto não encontrado.'}
+
+
 def test_delete_product(client, token, product):
     response = client.delete(
         f'/products/{product.id}',
@@ -188,3 +237,13 @@ def test_delete_product(client, token, product):
     )
 
     assert response.status_code == HTTPStatus.NO_CONTENT
+
+
+def test_delete_product_not_found(client, token, product):
+    response = client.delete(
+        '/products/9999',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Produto não encontrado.'}

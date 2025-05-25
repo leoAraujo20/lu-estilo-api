@@ -82,9 +82,15 @@ async def test_create_product(session):
 
 
 @pytest.mark.asyncio
-async def test_create_item(session, product):
+async def test_create_item(session, product, client_db):
     """Testa a criação de um item."""
+    order = Order(
+        client_id=client_db.id,
+    )
+    session.add(order)
+    await session.flush()
     item = Item(
+        order_id=order.id,
         product_id=product.id,
         quantity=2,
     )
@@ -103,23 +109,20 @@ async def test_create_item(session, product):
 
 
 @pytest.mark.asyncio
-async def test_create_order(session, client_db, item):
+async def test_create_order(session, client_db):
     """Testa a criação de um pedido."""
     order = Order(
         client_id=client_db.id,
-        items=[item],
     )
     session.add(order)
     await session.commit()
     await session.refresh(order)
     await session.refresh(client_db)
-    await session.refresh(item)
 
     order_db = await session.scalar(select(Order).where(Order.id == order.id))
 
     assert order_db
     assert order_db.client_id == client_db.id
     assert order_db.status == OrderStatus.PENDING
-    assert order_db.items == [item]
-    assert item.order == order
+    assert order_db.items == []
     assert client_db.orders == [order]

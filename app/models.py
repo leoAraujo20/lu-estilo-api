@@ -69,7 +69,10 @@ class Order:
         back_populates='orders', init=False
     )
     items: Mapped[list['Item']] = relationship(
-        cascade='all, delete-orphan', back_populates='order', lazy='selectin'
+        cascade='all, delete-orphan',
+        back_populates='order',
+        lazy='selectin',
+        init=False,
     )
     status: Mapped[OrderStatus] = mapped_column(
         default=OrderStatus.PENDING, nullable=False
@@ -80,16 +83,16 @@ class Order:
 class Item:
     __tablename__ = 'items'
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
-    order_id: Mapped[int] = mapped_column(
-        ForeignKey('orders.id'), nullable=True, init=False
-    )
     order: Mapped['Order'] = relationship(
         back_populates='items',
         init=False,
     )
+    quantity: Mapped[int] = mapped_column(nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id'))
     product: Mapped['Product'] = relationship(
         back_populates='items',
         init=False,
     )
-    quantity: Mapped[int] = mapped_column(nullable=False)
+    order_id: Mapped[int] = mapped_column(
+        ForeignKey('orders.id'), default=None, nullable=False
+    )

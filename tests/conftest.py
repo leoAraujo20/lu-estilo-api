@@ -9,6 +9,7 @@ from app.main import app
 from app.models import (
     Client,
     Item,
+    Order,
     Product,
     ProductSection,
     User,
@@ -98,9 +99,10 @@ async def product(session):
 
 
 @pytest_asyncio.fixture
-async def item(session, product):
+async def item(session, product, order):
     """Cria um item de teste."""
     item = Item(
+        order_id=order.id,
         product_id=product.id,
         quantity=2,
     )
@@ -108,6 +110,24 @@ async def item(session, product):
     await session.commit()
     await session.refresh(item)
     return item
+
+
+@pytest_asyncio.fixture
+async def order(session, client_db, product):
+    """Cria um pedido de teste."""
+    order = Order(
+        client_id=client_db.id,
+    )
+    order.items.append(
+        Item(
+            product_id=product.id,
+            quantity=2,
+        )
+    )
+    session.add(order)
+    await session.commit()
+    await session.refresh(order)
+    return order
 
 
 @pytest.fixture

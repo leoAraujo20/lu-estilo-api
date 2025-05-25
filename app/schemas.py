@@ -2,7 +2,7 @@ from datetime import date
 
 from pydantic import BaseModel
 
-from app.models import ProductSection
+from app.models import OrderStatus, ProductSection
 
 
 class FilterPage(BaseModel):
@@ -81,3 +81,26 @@ class TokenSchema(BaseModel):
 class FilterClient(FilterPage):
     name: str | None = None
     email: str | None = None
+
+
+class ItemSchema(BaseModel):
+    product_id: int
+    quantity: int
+
+
+class OrderSchema(BaseModel):
+    client_id: int
+    items: list[ItemSchema]
+    status: OrderStatus = OrderStatus.PENDING
+
+
+class OrderPublic(OrderSchema):
+    id: int
+
+
+class OrderList(BaseModel):
+    orders: list[OrderPublic]
+
+
+class OrderUpdate(BaseModel):
+    status: OrderStatus | None = None

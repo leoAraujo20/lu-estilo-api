@@ -106,9 +106,7 @@ async def test_get_products_with_section_filter(client, token, session):
 
 @pytest.mark.asyncio
 async def test_get_products_with_price_cents_filter(client, token, session):
-    session.add_all(
-        ProductFactory.build_batch(10, price_cents=30000)
-    )
+    session.add_all(ProductFactory.build_batch(10, price_cents=30000))
     clothing_products = ProductFactory.build_batch(2, price_cents=20000)
     session.add_all(clothing_products)
     await session.commit()
@@ -125,9 +123,7 @@ async def test_get_products_with_price_cents_filter(client, token, session):
 
 @pytest.mark.asyncio
 async def test_get_products_with_inventory_filter(client, token, session):
-    session.add_all(
-        ProductFactory.build_batch(10, inventory=100)
-    )
+    session.add_all(ProductFactory.build_batch(10, inventory=100))
     clothing_products = ProductFactory.build_batch(2, inventory=200)
     session.add_all(clothing_products)
     await session.commit()

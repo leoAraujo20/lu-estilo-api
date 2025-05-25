@@ -108,24 +108,22 @@ async def update_client(
             detail='Cliente não encontrado.',
         )
 
-    existing_client_email = await session.scalar(
-        select(Client).where(
-            (Client.email == client.email) & (Client.id != client_id)
+    update_data = client.model_dump(exclude_unset=True)
+    if 'email' in update_data:
+        existing_client = await session.scalar(
+            select(Client).where(Client.email == update_data['email'])
         )
-    )
+        if existing_client and existing_client.id != client_id:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail='Já existe um cliente com este e-mail.',
+            )
 
-    if existing_client_email:
-        raise HTTPException(
-            status_code=HTTPStatus.CONFLICT,
-            detail='Já existe um cliente com este e-mail.',
-        )
-
-    for field, value in client.model_dump(exclude_unset=True).items():
+    for field, value in update_data.items():
         setattr(client_db, field, value)
 
     await session.commit()
     await session.refresh(client_db)
-
     return client_db
 
 

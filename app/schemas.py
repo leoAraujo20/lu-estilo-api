@@ -1,4 +1,8 @@
+from datetime import date
+
 from pydantic import BaseModel
+
+from app.models import ProductSection
 
 
 class UserSchema(BaseModel):
@@ -30,6 +34,32 @@ class ClientUpdate(BaseModel):
 
 class ClientList(BaseModel):
     clients: list[ClientPublic]
+
+
+class ProductSchema(BaseModel):
+    barcode: str
+    description: str
+    price_cents: int
+    section: ProductSection
+    inventory: int
+    expiration_date: date | None = None
+
+
+class ProductPublic(ProductSchema):
+    id: int
+
+
+class ProductUpdate(BaseModel):
+    barcode: str | None = None
+    description: str | None = None
+    price_cents: int | None = None
+    section: ProductSection | None = None
+    inventory: int | None = None
+    expiration_date: date | None = None
+
+
+class ProductList(BaseModel):
+    products: list[ProductPublic]
 
 
 class TokenSchema(BaseModel):

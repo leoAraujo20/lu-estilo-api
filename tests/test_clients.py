@@ -8,6 +8,7 @@ from app.models import Client
 
 class ClientFactory(factory.Factory):
     """Fábrica para criar instâncias de Cliente para testes."""
+
     class Meta:
         model = Client
 
@@ -62,9 +63,9 @@ async def test_get_clients_with_pagination(session, client, token):
     await session.commit()
 
     response = client.get(
-       '/clients/?offset=0&limit=5',
-       headers={'Authorization': f'Bearer {token}'},
-   )
+        '/clients/?offset=0&limit=5',
+        headers={'Authorization': f'Bearer {token}'},
+    )
     expected_clients = 5
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()['clients']) == expected_clients

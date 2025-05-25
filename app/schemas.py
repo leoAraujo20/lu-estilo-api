@@ -5,6 +5,11 @@ from pydantic import BaseModel
 from app.models import ProductSection
 
 
+class FilterPage(BaseModel):
+    offset: int = 0
+    limit: int = 10
+
+
 class UserSchema(BaseModel):
     username: str
     password: str
@@ -62,14 +67,15 @@ class ProductList(BaseModel):
     products: list[ProductPublic]
 
 
+class ProductFilter(FilterPage):
+    section: ProductSection | None = None
+    price_cents: int | None = None
+    inventory: int | None = None
+
+
 class TokenSchema(BaseModel):
     access_token: str
     token_type: str
-
-
-class FilterPage(BaseModel):
-    offset: int = 0
-    limit: int = 10
 
 
 class FilterClient(FilterPage):

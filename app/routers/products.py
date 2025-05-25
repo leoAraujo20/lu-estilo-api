@@ -1,13 +1,14 @@
 from http import HTTPStatus
 from typing import Annotated, AsyncGenerator
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
 from app.models import Product
 from app.schemas import (
+    ProductFilter,
     ProductList,
     ProductPublic,
     ProductSchema,
@@ -54,9 +55,22 @@ async def create_product(
 
 
 @router.get('/', response_model=ProductList, status_code=HTTPStatus.OK)
-async def get_products(session: T_Session) -> ProductList:
+async def get_products(
+    session: T_Session, filter_query: Annotated[ProductFilter, Query()]
+) -> ProductList:
     """Obtém a lista de produtos."""
-    products = await session.scalars(select(Product))
+    query = (
+        select(Product).offset(filter_query.offset).limit(filter_query.limit)
+    )
+
+    if filter_query.section:
+        query = query.where(Product.section == filter_query.section)
+    if filter_query.price_cents:
+        query = query.where(Product.price_cents <= filter_query.price_cents)
+    if filter_query.inventory:
+        query = query.where(Product.inventory >= filter_query.inventory)
+
+    products = await session.scalars(query)
     products_list = products.all()
     return {'products': products_list}
 

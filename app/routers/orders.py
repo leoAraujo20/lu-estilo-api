@@ -80,11 +80,7 @@ async def get_orders(
     session: T_Session, filter_query: Annotated[OrderFilter, Query()]
 ) -> OrderList:
     """Obtém a lista de pedidos."""
-    query = (
-        select(Order)
-        .offset(filter_query.offset)
-        .limit(filter_query.limit)
-    )
+    query = select(Order).offset(filter_query.offset).limit(filter_query.limit)
 
     if filter_query.client_id:
         query = query.where(Order.client_id == filter_query.client_id)

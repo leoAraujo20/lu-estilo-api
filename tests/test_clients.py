@@ -39,6 +39,41 @@ def test_create_client(client, token):
     }
 
 
+def test_create_client_with_existing_email(client, token, client_db):
+    """Teste para tentar criar um cliente com email já existente."""
+    client_data = {
+        'name': 'Duplicate Client',
+        'email': client_db.email,
+        'cpf': '12345678902',
+    }
+
+    response = client.post(
+        '/clients/',
+        json=client_data,
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json()['detail'] == 'Já existe um cliente com este e-mail.'
+
+
+def test_create_client_with_existing_cpf(client, token, client_db):
+    """Teste para tentar criar um cliente com CPF já existente."""
+    client_data = {
+        'name': 'Duplicate Client',
+        'email': 'Duplicate Email',
+        'cpf': client_db.cpf,
+    }
+    response = client.post(
+        '/clients/',
+        json=client_data,
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json()['detail'] == 'Já existe um cliente com este CPF.'
+
+
 def test_get_clients(client, token, client_db):
     """Teste para obter a lista de clientes."""
     response = client.get(
@@ -54,6 +89,17 @@ def test_get_clients(client, token, client_db):
             'email': client_db.email,
         }
     ]
+
+
+def test_get_client_not_found(client, token):
+    """Teste para obter um cliente que não existe."""
+    response = client.get(
+        '/clients/9999',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json()['detail'] == 'Cliente não encontrado.'
 
 
 @pytest.mark.asyncio
@@ -141,6 +187,47 @@ def test_update_client(client, token, client_db):
     }
 
 
+def test_update_client_not_found(client, token):
+    """Teste para atualizar um cliente que não existe."""
+    updated_data = {
+        'name': 'Updated Client',
+        'email': 'updatedclient@example.com',
+    }
+
+    response = client.put(
+        '/clients/9999',
+        json=updated_data,
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json()['detail'] == 'Cliente não encontrado.'
+
+
+@pytest.mark.asyncio
+async def test_update_client_with_existing_email(
+    client, token, client_db, session
+):
+    """Teste para tentar atualizar um cliente com email já existente."""
+    existing_client = ClientFactory(email='existing@example.com')
+    session.add(existing_client)
+    await session.commit()
+
+    updated_data = {
+        'name': 'Updated Client',
+        'email': existing_client.email,
+    }
+
+    response = client.put(
+        f'/clients/{client_db.id}',
+        json=updated_data,
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json()['detail'] == 'Já existe um cliente com este e-mail.'
+
+
 def test_delete_client(client, token, client_db):
     """Teste para deletar um cliente."""
     response = client.delete(
@@ -149,3 +236,14 @@ def test_delete_client(client, token, client_db):
     )
 
     assert response.status_code == HTTPStatus.NO_CONTENT
+
+
+def test_delete_client_not_found(client, token):
+    """Teste para tentar deletar um cliente que não existe."""
+    response = client.delete(
+        '/clients/9999',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json()['detail'] == 'Cliente não encontrado.'

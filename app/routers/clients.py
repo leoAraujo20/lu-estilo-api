@@ -109,9 +109,12 @@ async def update_client(
         )
 
     existing_client_email = await session.scalar(
-        select(Client).where(Client.email == client.email)
+        select(Client).where(
+            (Client.email == client.email) & (Client.id != client_id)
+        )
     )
-    if existing_client_email and existing_client_email.id != client_db.id:
+
+    if existing_client_email:
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail='Já existe um cliente com este e-mail.',

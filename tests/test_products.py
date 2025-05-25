@@ -1,6 +1,8 @@
 from http import HTTPStatus
 
 import factory
+import factory.fuzzy
+import pytest
 
 from app.models import Product, ProductSection
 
@@ -12,7 +14,7 @@ class ProductFactory(factory.Factory):
     barcode = factory.Faker('ean13')
     description = factory.Faker('sentence', nb_words=6)
     price_cents = factory.Faker('random_int', min=100, max=10000, step=100)
-    section = factory.Iterator(ProductSection)
+    section = factory.fuzzy.FuzzyChoice(ProductSection)
     inventory = factory.Faker('random_int', min=0, max=1000)
     expiration_date = None
 
@@ -64,6 +66,80 @@ def test_get_products(client, token, product):
             }
         ]
     }
+
+
+@pytest.mark.asyncio
+async def test_get_products_with_pagination(client, token, session):
+    session.add_all(ProductFactory.build_batch(10))
+    await session.commit()
+
+    response = client.get(
+        '/products/?offset=0&limit=5',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    expected_products = 5
+
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()['products']) == expected_products
+
+
+@pytest.mark.asyncio
+async def test_get_products_with_section_filter(client, token, session):
+    session.add_all(
+        ProductFactory.build_batch(10, section=ProductSection.SHOES)
+    )
+    clothing_products = ProductFactory.build_batch(
+        2, section=ProductSection.CLOTHING
+    )
+    session.add_all(clothing_products)
+    await session.commit()
+
+    response = client.get(
+        '/products/?section=clothing',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    expected_products = 2
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()['products']) == expected_products
+
+
+@pytest.mark.asyncio
+async def test_get_products_with_price_cents_filter(client, token, session):
+    session.add_all(
+        ProductFactory.build_batch(10, price_cents=30000)
+    )
+    clothing_products = ProductFactory.build_batch(2, price_cents=20000)
+    session.add_all(clothing_products)
+    await session.commit()
+
+    response = client.get(
+        '/products/?price_cents=20000',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    expected_products = 2
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()['products']) == expected_products
+
+
+@pytest.mark.asyncio
+async def test_get_products_with_inventory_filter(client, token, session):
+    session.add_all(
+        ProductFactory.build_batch(10, inventory=100)
+    )
+    clothing_products = ProductFactory.build_batch(2, inventory=200)
+    session.add_all(clothing_products)
+    await session.commit()
+
+    response = client.get(
+        '/products/?inventory=200',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    expected_products = 2
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()['products']) == expected_products
 
 
 def test_get_product(client, token, product):

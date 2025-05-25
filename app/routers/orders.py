@@ -1,13 +1,19 @@
 from http import HTTPStatus
 from typing import Annotated, AsyncGenerator
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
 from app.models import Client, Item, Order, Product
-from app.schemas import OrderList, OrderPublic, OrderSchema, OrderUpdate
+from app.schemas import (
+    OrderFilter,
+    OrderList,
+    OrderPublic,
+    OrderSchema,
+    OrderUpdate,
+)
 from app.security import get_current_user
 
 router = APIRouter(
@@ -70,9 +76,26 @@ async def create_order(order: OrderSchema, session: T_Session) -> OrderPublic:
 
 
 @router.get('/', response_model=OrderList, status_code=HTTPStatus.OK)
-async def get_orders(session: T_Session) -> OrderList:
+async def get_orders(
+    session: T_Session, filter_query: Annotated[OrderFilter, Query()]
+) -> OrderList:
     """Obtém a lista de pedidos."""
-    orders = await session.scalars(select(Order))
+    query = (
+        select(Order)
+        .offset(filter_query.offset)
+        .limit(filter_query.limit)
+    )
+
+    if filter_query.client_id:
+        query = query.where(Order.client_id == filter_query.client_id)
+    if filter_query.status:
+        query = query.where(Order.status == filter_query.status)
+    if filter_query.order_date_from:
+        query = query.where(Order.order_date >= filter_query.order_date_from)
+    if filter_query.order_date_to:
+        query = query.where(Order.order_date <= filter_query.order_date_to)
+
+    orders = await session.scalars(query)
     orders_list = orders.all()
     return {'orders': orders_list}
 

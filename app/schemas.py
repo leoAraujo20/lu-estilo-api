@@ -105,3 +105,11 @@ class OrderList(BaseModel):
 
 class OrderUpdate(BaseModel):
     status: OrderStatus | None = None
+
+
+class OrderFilter(FilterPage):
+    client_id: int | None = None
+    status: OrderStatus | None = None
+    order_date_from: datetime | None = None
+    order_date_to: datetime | None = None
+    product_section: ProductSection | None = None

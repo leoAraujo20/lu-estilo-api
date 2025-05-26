@@ -29,7 +29,55 @@ router = APIRouter(
 async def create_product(
     session: T_Session, product: ProductSchema
 ) -> ProductPublic:
-    """Cria um novo produto."""
+    """
+    Cria um novo produto.
+
+    Esta rota permite o cadastro de um novo produto no sistema.
+    O código de barras deve ser único.
+
+    Args:
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+        product (ProductSchema):
+            - Dados do produto a ser criado (
+                barcode,
+                description,
+                price_cents,
+                section(clothing, shoes, accessories),
+                inventory,
+                expiration_date(default None)
+            ).
+
+    Returns:
+        ProductPublic:
+            - Dados públicos do produto criado.
+
+    Raises:
+        HTTPException:
+            - 409 CONFLICT se já existir produto com o mesmo código de barras.
+
+    Example:
+        Request:
+            POST /products/
+            {
+                "barcode": "123456789",
+                "description": "Produto Exemplo",
+                "price_cents": 1000,
+                "section": "clothing",
+                "inventory": 10,
+                "expiration_date": "2024-12-31"
+            }
+        Response:
+            {
+                "id": 1,
+                "barcode": "123456789",
+                "description": "Produto Exemplo",
+                "price_cents": 1000,
+                "section": "clothing",
+                "inventory": 10,
+                "expiration_date": "2024-12-31"
+            }
+    """
     product_db = await session.scalar(
         select(Product).where(Product.barcode == product.barcode)
     )
@@ -58,7 +106,42 @@ async def create_product(
 async def get_products(
     session: T_Session, filter_query: Annotated[ProductFilter, Query()]
 ) -> ProductList:
-    """Obtém a lista de produtos."""
+    """
+    Obtém a lista de produtos.
+
+    Esta rota retorna uma lista paginada de produtos,
+    podendo ser filtrada por seção, preço máximo e inventário mínimo.
+
+    Args:
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+        filter_query (ProductFilter):
+            - Parâmetros de filtro e paginação (
+                limit, offset, section, price_cents, inventory
+            ).
+
+    Returns:
+        ProductList:
+            - Lista de produtos.
+
+    Example:
+        Request:
+            GET /products/?limit=10&offset=0&section=clothing
+        Response:
+            {
+                "products": [
+                    {
+                        "id": 1,
+                        "barcode": "123456789",
+                        "description": "Produto Exemplo",
+                        "price_cents": 1000,
+                        "section": "clothing",
+                        "inventory": 10,
+                        "expiration_date": "2024-12-31"
+                    }
+                ]
+            }
+    """
     query = (
         select(Product).offset(filter_query.offset).limit(filter_query.limit)
     )
@@ -79,7 +162,39 @@ async def get_products(
     '/{product_id}', response_model=ProductPublic, status_code=HTTPStatus.OK
 )
 async def get_product(product_id: int, session: T_Session) -> ProductPublic:
-    """Obtém um produto pelo ID."""
+    """
+    Obtém um produto pelo ID.
+
+    Esta rota retorna os dados de um produto específico a partir do seu ID.
+
+    Args:
+        product_id (int):
+            - ID do produto.
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        ProductPublic:
+            - Dados públicos do produto.
+
+    Raises:
+        HTTPException:
+            - 404 NOT FOUND se o produto não existir.
+
+    Example:
+        Request:
+            GET /products/1
+        Response:
+            {
+                "id": 1,
+                "barcode": "123456789",
+                "description": "Produto Exemplo",
+                "price_cents": 1000,
+                "section": "clothing",
+                "inventory": 10,
+                "expiration_date": "2024-12-31"
+            }
+    """
     product_db = await session.scalar(
         select(Product).where(Product.id == product_id)
     )
@@ -98,7 +213,51 @@ async def get_product(product_id: int, session: T_Session) -> ProductPublic:
 async def update_product(
     product_id: int, product: ProductUpdate, session: T_Session
 ) -> ProductPublic:
-    """Atualiza um produto pelo ID."""
+    """
+    Atualiza um produto pelo ID.
+
+    Esta rota permite atualizar os dados de um produto existente.
+
+    Args:
+        product_id (int):
+            - ID do produto.
+        product (ProductUpdate):
+            - Dados a serem atualizados (
+                description,
+                price_cents,
+                section(clothing, shoes, accessories),
+                inventory,
+                expiration_date
+            ).
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        ProductPublic:
+            - Dados públicos do produto atualizado.
+
+    Raises:
+        HTTPException:
+            - 404 NOT FOUND se o produto não existir.
+
+    Example:
+        Request:
+            PUT /products/1
+            {
+                "description": "Novo Produto",
+                "price_cents": 1500
+            }
+        Response:
+            {
+                "id": 1,
+                "barcode": "123456789",
+                "description": "Novo Produto",
+                "price_cents": 1500,
+                "section": "clothing",
+                "inventory": 10,
+                "expiration_date": "2024-12-31"
+            }
+    """
     product_db = await session.scalar(
         select(Product).where(Product.id == product_id)
     )
@@ -118,7 +277,30 @@ async def update_product(
 
 @router.delete('/{product_id}', status_code=HTTPStatus.NO_CONTENT)
 async def delete_product(product_id: int, session: T_Session) -> None:
-    """Remove um produto pelo ID."""
+    """
+    Remove um produto pelo ID.
+
+    Esta rota remove um produto do sistema a partir do seu ID.
+
+    Args:
+        product_id (int):
+            - ID do produto.
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        None
+
+    Raises:
+        HTTPException:
+            - 404 NOT FOUND se o produto não existir.
+
+    Example:
+        Request:
+            DELETE /products/1
+        Response:
+            Status 204 No Content
+    """
     product_db = await session.scalar(
         select(Product).where(Product.id == product_id)
     )

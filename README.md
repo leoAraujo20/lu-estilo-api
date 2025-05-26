@@ -70,3 +70,11 @@ API para gerenciamento de usuarios, clientes, produtos e pedidos.
 9. **Acesse a aplicação:**
 
 - Documentação Swagger: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+## Rodando os testes
+
+**Depois de instalar as depedências do projeto execute:**
+
+   ```sh
+    task test
+   ```

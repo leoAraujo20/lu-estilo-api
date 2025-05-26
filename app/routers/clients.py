@@ -29,7 +29,41 @@ T_Session = Annotated[AsyncGenerator[AsyncSession], Depends(get_async_session)]
 async def create_client(
     client: ClientSchema, session: T_Session
 ) -> ClientPublic:
-    """Cria um novo cliente."""
+    """
+    Cria um novo cliente.
+
+    Esta rota permite o cadastro de um novo cliente no sistema.
+    O e-mail e o CPF devem ser únicos.
+
+    Args:
+        client (ClientSchema):
+            - Dados do cliente a ser criado (name, email, cpf).
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        ClientPublic:
+            - Dados públicos do cliente criado(id, name, email).
+
+    Raises:
+        HTTPException:
+            - 409 CONFLICT se já existir cliente com o mesmo e-mail ou CPF.
+
+    Example:
+        Request:
+            POST /clients/
+            {
+                "name": "Maria Silva",
+                "email": "maria@email.com",
+                "cpf": "12345678900"
+            }
+        Response:
+            {
+                "id": 1,
+                "name": "Maria Silva",
+                "email": "maria@email.com",
+            }
+    """
     client_db = await session.scalar(
         select(Client).where(
             (Client.cpf == client.cpf) | (Client.email == client.email)
@@ -62,7 +96,36 @@ async def create_client(
 async def get_clients(
     session: T_Session, filter_query: Annotated[FilterClient, Query()]
 ) -> ClientList:
-    """Obtém a lista de clientes."""
+    """
+    Obtém a lista de clientes.
+
+    Esta rota retorna uma lista paginada de clientes,
+    podendo ser filtrada por nome ou e-mail.
+
+    Args:
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+        filter_query (FilterClient):
+            - Parâmetros de filtro e paginação (limit, offset, name, email).
+
+    Returns:
+        ClientList:
+            - Lista de clientes(id, name, email).
+
+    Example:
+        Request:
+            GET /clients/?limit=10&offset=0&name=Maria
+        Response:
+            {
+                "clients": [
+                    {
+                        "id": 1,
+                        "name": "Maria Silva",
+                        "email": "maria@email.com",
+                    }
+                ]
+            }
+    """
     query = (
         select(Client).offset(filter_query.offset).limit(filter_query.limit)
     )
@@ -82,7 +145,35 @@ async def get_clients(
     '/{client_id}', response_model=ClientPublic, status_code=HTTPStatus.OK
 )
 async def get_client(client_id: int, session: T_Session) -> ClientPublic:
-    """Obtém um cliente pelo ID."""
+    """
+    Obtém um cliente pelo ID.
+
+    Esta rota retorna os dados de um cliente específico a partir do seu ID.
+
+    Args:
+        client_id (int):
+            - ID do cliente.
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        ClientPublic:
+            - Dados públicos do cliente(id, name, email).
+
+    Raises:
+        HTTPException:
+            - 404 NOT FOUND se o cliente não existir.
+
+    Example:
+        Request:
+            GET /clients/1
+        Response:
+            {
+                "id": 1,
+                "name": "Maria Silva",
+                "email": "maria@email.com",
+            }
+    """
     client = await session.scalar(select(Client).where(Client.id == client_id))
     if not client:
         raise HTTPException(
@@ -98,7 +189,42 @@ async def get_client(client_id: int, session: T_Session) -> ClientPublic:
 async def update_client(
     client_id: int, client: ClientUpdate, session: T_Session
 ) -> ClientPublic:
-    """Atualiza um cliente pelo ID"""
+    """
+    Atualiza um cliente pelo ID.
+
+    Esta rota permite atualizar os dados de um cliente existente.
+
+    Args:
+        client_id (int):
+            - ID do cliente.
+        client (ClientUpdate):
+            - Dados a serem atualizados(name, email).
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        ClientPublic:
+            - Dados públicos do cliente atualizado(id, name, email).
+
+    Raises:
+        HTTPException:
+            - 404 NOT FOUND se o cliente não existir.
+        HTTPException:
+            - 409 CONFLICT se o e-mail já estiver em uso por outro cliente.
+
+    Example:
+        Request:
+            PUT /clients/1
+            {
+                "name": "Maria Souza"
+            }
+        Response:
+            {
+                "id": 1,
+                "name": "Maria Souza",
+                "email": "maria@email.com",
+            }
+    """
     client_db = await session.scalar(
         select(Client).where(Client.id == client_id)
     )
@@ -129,7 +255,30 @@ async def update_client(
 
 @router.delete('/{client_id}', status_code=HTTPStatus.NO_CONTENT)
 async def delete_client(client_id: int, session: T_Session) -> None:
-    """Deleta um cliente pelo ID."""
+    """
+    Deleta um cliente pelo ID.
+
+    Esta rota remove um cliente do sistema a partir do seu ID.
+
+    Args:
+        client_id (int):
+            - ID do cliente.
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        None
+
+    Raises:
+        HTTPException:
+            - 404 NOT FOUND se o cliente não existir.
+
+    Example:
+        Request:
+            DELETE /clients/1
+        Response:
+            Status 204 No Content
+    """
     client_db = await session.scalar(
         select(Client).where(Client.id == client_id)
     )

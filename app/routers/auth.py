@@ -30,14 +30,18 @@ async def create_user(user: UserSchema, session=Depends(get_async_session)):
     O nome de usuário deve ser único.
 
     Args:
-        user (UserSchema): Dados do usuário a ser criado (username e password).
-        session: Sessão de banco de dados injetada pelo FastAPI.
+        user (UserSchema):
+            - Dados do usuário a ser criado (username e password).
+        session:
+             - Sessão de banco de dados injetada pelo FastAPI.
 
     Returns:
-        UserPublic: Dados públicos do usuário criado.
+        UserPublic:
+           - Dados públicos do usuário criado(id, username).
 
     Raises:
-        HTTPException: 409 CONFLICT se o usuário já existir.
+        HTTPException:
+             - 409 CONFLICT se o usuário já existir.
 
     Example:
         Request:
@@ -82,14 +86,18 @@ async def login_for_access_token(
     username e password, retornando um token JWT para acesso autenticado.
 
     Args:
-        user (OAuth2PasswordRequestForm): Formulário OAuth2
-        session: Sessão de banco de dados injetada pelo FastAPI.
+        user (OAuth2PasswordRequestForm):
+            - Formulário OAuth2 com username e password.
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
 
     Returns:
-        TokenSchema: Token JWT de acesso e tipo do token.
+        TokenSchema:
+            - Token JWT de acesso e tipo do token.
 
     Raises:
-        HTTPException: 401 UNAUTHORIZED se as credenciais forem inválidas.
+        HTTPException:
+            - 401 UNAUTHORIZED se as credenciais forem inválidas.
 
     Example:
         Request (form-data):
@@ -137,10 +145,12 @@ async def refresh_token(user: Annotated[User, Depends(get_current_user)]):
     Esta rota permite renovar o token JWT de um usuário já autenticado.
 
     Args:
-        user (User): Usuário autenticado extraído do token atual.
+        user (User):
+            - Usuário autenticado extraído do token atual.
 
     Returns:
-        TokenSchema: Novo token JWT de acesso e tipo do token.
+        TokenSchema:
+             - Novo token JWT de acesso e tipo do token.
 
     Example:
         Request (header):

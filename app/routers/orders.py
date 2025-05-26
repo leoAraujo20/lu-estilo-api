@@ -27,7 +27,57 @@ T_Session = Annotated[AsyncGenerator[AsyncSession], Depends(get_async_session)]
 
 @router.post('/', response_model=OrderPublic, status_code=HTTPStatus.CREATED)
 async def create_order(order: OrderSchema, session: T_Session) -> OrderPublic:
-    """Cria um novo pedido."""
+    """
+    Cria um novo pedido.
+
+    Esta rota permite o cadastro de um novo pedido no sistema.
+    O pedido deve conter um cliente válido e uma lista de itens com produtos
+    existentes e estoque suficiente.
+
+    Args:
+        order (OrderSchema):
+            - Dados do pedido a ser criado:
+                - client_id (int): ID do cliente.
+                - items (list[ItemSchema]): Lista de itens.
+                - status (OrderStatus): Status do pedido (default: PENDING).
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        OrderPublic:
+            - Dados públicos do pedido criado:
+                - id (int)
+                - client_id (int)
+                - items (list[ItemSchema])
+                - status (OrderStatus)
+                - order_date (datetime)
+
+    Raises:
+        HTTPException:
+            - 404 NOT FOUND se o cliente ou algum produto não existir.
+            - 400 BAD REQUEST se não houver estoque.
+
+    Example:
+        Request:
+            POST /orders/
+            {
+                "client_id": 1,
+                "items": [
+                    {"product_id": 2, "quantity": 3}
+                ],
+                "status": "PENDING"
+            }
+        Response:
+            {
+                "id": 10,
+                "client_id": 1,
+                "items": [
+                    {"product_id": 2, "quantity": 3}
+                ],
+                "status": "PENDING",
+                "order_date": "2024-06-01T12:00:00"
+            }
+    """
     client_db = await session.scalar(
         select(Client).where(Client.id == order.client_id)
     )
@@ -79,7 +129,48 @@ async def create_order(order: OrderSchema, session: T_Session) -> OrderPublic:
 async def get_orders(
     session: T_Session, filter_query: Annotated[OrderFilter, Query()]
 ) -> OrderList:
-    """Obtém a lista de pedidos."""
+    """
+    Obtém a lista de pedidos.
+
+    Esta rota retorna uma lista paginada de pedidos,
+    podendo ser filtrada por cliente, status,
+    data de pedido e seção do produto.
+
+    Args:
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+        filter_query (OrderFilter):
+            - Parâmetros de filtro e paginação:
+                - limit (int), offset (int)
+                - client_id (int, opcional)
+                - status (OrderStatus, opcional)
+                - order_date_from (datetime, opcional)
+                - order_date_to (datetime, opcional)
+                - product_section (ProductSection, opcional)
+
+    Returns:
+        OrderList:
+            - Lista de pedidos:
+                - orders (list[OrderPublic])
+
+    Example:
+        Request:
+            GET /orders/?limit=10&offset=0&client_id=1
+        Response:
+            {
+                "orders": [
+                    {
+                        "id": 10,
+                        "client_id": 1,
+                        "items": [
+                            {"product_id": 2, "quantity": 3}
+                        ],
+                        "status": "PENDING",
+                        "order_date": "2024-06-01T12:00:00"
+                    }
+                ]
+            }
+    """
     query = select(Order).offset(filter_query.offset).limit(filter_query.limit)
 
     if filter_query.client_id:
@@ -100,7 +191,44 @@ async def get_orders(
     '/{order_id}', response_model=OrderPublic, status_code=HTTPStatus.OK
 )
 async def get_order(order_id: int, session: T_Session) -> OrderPublic:
-    """Obtém um pedido específico pelo ID."""
+    """
+    Obtém um pedido específico pelo ID.
+
+    Esta rota retorna os dados de um pedido específico a partir do seu ID.
+
+    Args:
+        order_id (int):
+            - ID do pedido.
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        OrderPublic:
+            - Dados públicos do pedido:
+                - id (int)
+                - client_id (int)
+                - items (list[ItemSchema])
+                - status (OrderStatus)
+                - order_date (datetime)
+
+    Raises:
+        HTTPException:
+            - 404 NOT FOUND se o pedido não existir.
+
+    Example:
+        Request:
+            GET /orders/10
+        Response:
+            {
+                "id": 10,
+                "client_id": 1,
+                "items": [
+                    {"product_id": 2, "quantity": 3}
+                ],
+                "status": "PENDING",
+                "order_date": "2024-06-01T12:00:00"
+            }
+    """
     order_db = await session.scalar(select(Order).where(Order.id == order_id))
     if not order_db:
         raise HTTPException(
@@ -116,7 +244,50 @@ async def get_order(order_id: int, session: T_Session) -> OrderPublic:
 async def update_order(
     order_id: int, order: OrderUpdate, session: T_Session
 ) -> OrderPublic:
-    """Atualiza um pedido existente."""
+    """
+    Atualiza um pedido existente.
+
+    Esta rota permite atualizar o status de um pedido existente.
+
+    Args:
+        order_id (int):
+            - ID do pedido.
+        order (OrderUpdate):
+            - Dados a serem atualizados:
+                - status (OrderStatus, opcional)
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        OrderPublic:
+            - Dados públicos do pedido atualizado:
+                - id (int)
+                - client_id (int)
+                - items (list[ItemSchema])
+                - status (OrderStatus)
+                - order_date (datetime)
+
+    Raises:
+        HTTPException:
+            - 404 NOT FOUND se o pedido não existir.
+
+    Example:
+        Request:
+            PUT /orders/10
+            {
+                "status": "COMPLETED"
+            }
+        Response:
+            {
+                "id": 10,
+                "client_id": 1,
+                "items": [
+                    {"product_id": 2, "quantity": 3}
+                ],
+                "status": "COMPLETED",
+                "order_date": "2024-06-01T12:00:00"
+            }
+    """
     order_db = await session.scalar(select(Order).where(Order.id == order_id))
     if not order_db:
         raise HTTPException(
@@ -134,7 +305,30 @@ async def update_order(
 
 @router.delete('/{order_id}', status_code=HTTPStatus.NO_CONTENT)
 async def delete_order(order_id: int, session: T_Session) -> None:
-    """Remove um pedido existente."""
+    """
+    Remove um pedido existente.
+
+    Esta rota remove um pedido do sistema a partir do seu ID.
+
+    Args:
+        order_id (int):
+            - ID do pedido.
+        session:
+            - Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        None
+
+    Raises:
+        HTTPException:
+            - 404 NOT FOUND se o pedido não existir.
+
+    Example:
+        Request:
+            DELETE /orders/10
+        Response:
+            Status 204 No Content
+    """
     order_db = await session.scalar(select(Order).where(Order.id == order_id))
     if not order_db:
         raise HTTPException(

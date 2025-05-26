@@ -17,13 +17,12 @@ API para gerenciamento de usuarios, clientes, produtos e pedidos.
    git clone https://github.com/leoAraujo20/lu-estilo-api.git
    ```
 
-
 2. **Instale o `uv` (se ainda não tiver):**
 
    ```sh
    pip install uv
    ```
-   
+
 3. **Crie um ambiente virtual**
 
    ```sh
@@ -38,11 +37,12 @@ API para gerenciamento de usuarios, clientes, produtos e pedidos.
    ```
 
 5. **Crie o arquivo `.env` na raiz do projeto com suas próprias configurações:**
-   ```
+
+   ```sh
    SECRET_KEY="sua_chave_secreta"
    ALGORITHM="HS256"
    ACCESS_TOKEN_EXPIRE_MINUTES=30
-   
+
    DATABASE_URL="postgresql+psycopg://app_user:senha@lu_estilo_database:5432/nome_do_banco"
    POSTGRES_USER="app_user" # Mantenha como app_user
    POSTGRES_PASSWORD="senha"
@@ -50,6 +50,7 @@ API para gerenciamento de usuarios, clientes, produtos e pedidos.
    ```
 
 6. **Instale as depedências do projeto:**
+
    ```sh
     uv sync
    ```
@@ -61,11 +62,12 @@ API para gerenciamento de usuarios, clientes, produtos e pedidos.
    Isso evita erros de execução no Docker/Linux.
 
 8. **Execute o docker compose:**
-   ```
-   docker compose up --build  
+
+   ```sh
+   docker compose up --build
    ```
 
 9. **Acesse a aplicação:**
-  - Documentação Swagger: http://localhost:8000/docs
-  - Redoc: http://localhost:8000/redoc
 
+- Documentação Swagger: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Redoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)

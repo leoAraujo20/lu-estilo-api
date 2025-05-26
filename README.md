@@ -71,3 +71,12 @@ API para gerenciamento de usuarios, clientes, produtos e pedidos.
 
 - Documentação Swagger: [http://localhost:8000/docs](http://localhost:8000/docs)
 - Redoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+## Rodando os testes:
+
+**Depois de instalar as depedências do projeto execute:**
+   
+   ```sh
+    task test
+   ```
+

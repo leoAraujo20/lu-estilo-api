@@ -70,4 +70,3 @@ API para gerenciamento de usuarios, clientes, produtos e pedidos.
 9. **Acesse a aplicação:**
 
 - Documentação Swagger: [http://localhost:8000/docs](http://localhost:8000/docs)
-- Redoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)

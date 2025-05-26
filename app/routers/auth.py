@@ -23,7 +23,35 @@ router = APIRouter(prefix='/auth', tags=['auth'])
     '/register', status_code=HTTPStatus.CREATED, response_model=UserPublic
 )
 async def create_user(user: UserSchema, session=Depends(get_async_session)):
-    """Rota para criar um novo usuário."""
+    """
+    Cria um novo usuário.
+
+    Esta rota permite o cadastro de um novo usuário no sistema.
+    O nome de usuário deve ser único.
+
+    Args:
+        user (UserSchema): Dados do usuário a ser criado (username e password).
+        session: Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        UserPublic: Dados públicos do usuário criado.
+
+    Raises:
+        HTTPException: 409 CONFLICT se o usuário já existir.
+
+    Example:
+        Request:
+            POST /auth/register
+            {
+                "username": "usuario1",
+                "password": "senha123"
+            }
+        Response:
+            {
+                "id": 1,
+                "username": "usuario1"
+            }
+    """
 
     user_db = await session.scalar(
         select(User).where(User.username == user.username)
@@ -47,7 +75,34 @@ async def login_for_access_token(
     user: Annotated[OAuth2PasswordRequestForm, Depends()],
     session=Depends(get_async_session),
 ):
-    """Rota para autenticar um usuário e gerar um token JWT."""
+    """
+    Autentica um usuário e gera um token JWT.
+
+    Esta rota realiza a autenticação de um usuário a partir do
+    username e password, retornando um token JWT para acesso autenticado.
+
+    Args:
+        user (OAuth2PasswordRequestForm): Formulário OAuth2
+        session: Sessão de banco de dados injetada pelo FastAPI.
+
+    Returns:
+        TokenSchema: Token JWT de acesso e tipo do token.
+
+    Raises:
+        HTTPException: 401 UNAUTHORIZED se as credenciais forem inválidas.
+
+    Example:
+        Request (form-data):
+            POST /auth/login
+            username=usuario1
+            password=senha123
+        Response:
+            {
+                "access_token": "<jwt_token>",
+                "token_type": "bearer"
+            }
+    """
+
     credentials_exception = HTTPException(
         status_code=HTTPStatus.UNAUTHORIZED,
         detail='Usuário ou senha inválidos.',
@@ -76,7 +131,28 @@ async def login_for_access_token(
     '/refresh-token', status_code=HTTPStatus.OK, response_model=TokenSchema
 )
 async def refresh_token(user: Annotated[User, Depends(get_current_user)]):
-    """Rota para atualizar o token JWT."""
+    """
+    Atualiza o token JWT do usuário autenticado.
+
+    Esta rota permite renovar o token JWT de um usuário já autenticado.
+
+    Args:
+        user (User): Usuário autenticado extraído do token atual.
+
+    Returns:
+        TokenSchema: Novo token JWT de acesso e tipo do token.
+
+    Example:
+        Request (header):
+            POST /auth/refresh-token
+            Authorization: Bearer <jwt_token>
+        Response:
+            {
+                "access_token": "<novo_jwt_token>",
+                "token_type": "bearer"
+            }
+    """
+
     access_token = create_jwt_token(data={'sub': user.username})
     return {
         'access_token': access_token,

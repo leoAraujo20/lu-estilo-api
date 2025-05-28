@@ -97,3 +97,12 @@ def test_update_order(client, token, order):
         'status': 'shipped',
         'order_date': response.json().get('order_date'),
     }
+
+
+def test_delete_order(client, token, order):
+    response = client.delete(
+        f'/orders/{order.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
